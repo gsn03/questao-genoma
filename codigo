@@ -1,0 +1,83 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+using namespace std;
+
+const int TAMANHO_BLOCO = 6;
+const int TAMANHO_TABELA = 10007;
+
+class tabela_hash {
+private:
+    vector<vector<pair<string, int>>> pares;  // vetor de pares 
+
+    // Calcular o indice com base na composição do bloco
+    int calcular_hash(const string& bloco) {
+        int valor_hash = 0;
+        for (char base : bloco) {
+            switch (base) {
+                case 'A': valor_hash = valor_hash * 4 + 0; break;
+                case 'C': valor_hash = valor_hash * 4 + 1; break;
+                case 'G': valor_hash = valor_hash * 4 + 2; break;
+                case 'T': valor_hash = valor_hash * 4 + 3; break;
+                default:  valor_hash = valor_hash * 4; break;
+            }
+            valor_hash %= TAMANHO_TABELA;
+        }
+        return valor_hash;
+    }
+
+public:
+    // Inicializar a tabela vazia
+    tabela_hash() {
+        pares.resize(TAMANHO_TABELA);
+    }
+
+    // Insere o bloco na tabela ou incrementa a contagem
+    void inserir(const string& bloco) {
+        int indice = calcular_hash(bloco);
+        for (auto& par : pares[indice]) {
+            if (par.first == bloco) {
+                par.second++;
+                return;
+            }
+        }
+        pares[indice].emplace_back(bloco, 1);
+    }
+
+    // Salva os resultados em um arquivo
+    void salvar_arquivo(const string& nome_arquivo) {
+        ofstream saida(nome_arquivo);
+        for (const auto& compartimento : pares) {
+            for (const auto& par : compartimento) {
+                saida << par.first << " " << par.second << "\n";
+            }
+        }
+        saida.close();
+    }
+};
+
+int main() {
+    string linha_entrada;
+    tabela_hash tabela;
+
+    // Ler ate uma linha vazia
+    while (getline(cin, linha_entrada)) {
+        if (linha_entrada.empty()) break;
+
+        // Processar apenas linhas com pelo menos 60 caracteres
+        if (linha_entrada.size() < 60) continue;
+
+        // Extrair 10 blocos de 6 caracteres 
+        for (size_t i = 0; i + TAMANHO_BLOCO <= 60; i += TAMANHO_BLOCO) {
+            string bloco = linha_entrada.substr(i, TAMANHO_BLOCO);
+            tabela.inserir(bloco);
+        }
+    }
+
+    // Salvar contagens no arquivo de saída
+    tabela.salvar_arquivo("saida.txt");
+
+    cout << "Processamento concluído. Resultados salvos em saida.txt.\n";
+    return 0;
+}
